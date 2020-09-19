@@ -48,18 +48,21 @@ app.post('/register', async function (req, res) {
   try {
     let user;
 
-    bcrypt.hash(req.body.password, 10, async (error, hash) => {
-      // Store hash in your password DB.
-      [user] = await req.db.query(`
-        INSERT INTO user (email, fname, lname, password)
-        VALUES (:email, :fname, :lname, :password);
-      `, {
-        email: req.body.email,
-        fname: req.body.fname,
-        lname: req.body.lname,
-        password: hash
-      });
-    });
+    bcrypt.hash(req.body.password, 10).then(async hash => {
+      try {
+        [user] = await req.db.query(`
+          INSERT INTO user (email, fname, lname, password)
+          VALUES (:email, :fname, :lname, :password);
+        `, {
+          email: req.body.email,
+          fname: req.body.fname,
+          lname: req.body.lname,
+          password: hash
+        });
+      } catch (error) {
+        console.log('error', error)
+      }
+    })
 
     res.json(user);
   } catch (err) {
@@ -75,32 +78,24 @@ app.post('/auth', async function (req, res) {
       email: req.body.email
     });
 
-    let payload = {}
-    let encodedUser;
-    let passwordFound = false;
+    const userPassword = `${user.password}`
+    const compare = await bcrypt.compare(req.body.password, userPassword)
 
-    bcrypt.compare(req.body.password, user.password, (err, passwordMatch) => {
-      // result === true
-      if (passwordMatch) {
-        payload = {
-          email: user.email,
-          fname: user.fname,
-          lname: user.lname,
-          password: user.password,
-          role: 4
-        }
-        
-        encodedUser = jwt.sign(payload, process.env.JWT_KEY);
-    
-      } else {
-        passwordFound = true;
+    if (compare) {
+      const payload = {
+        email: user.email,
+        fname: user.fname,
+        lname: user.lname,
+        password: user.password,
+        role: 4
       }
-    });
+      
+      const encodedUser = jwt.sign(payload, process.env.JWT_KEY);
 
-    if (passwordFound) {
       res.json(encodedUser)
+  
     } else {
-      return 'Email/password not found'
+      res.json('Email/password not found')
     }
   } catch (err) {
     console.log('Error', err)
