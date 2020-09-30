@@ -2,6 +2,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const cors = require('cors');
 
 // NEW: MySQL database driver
 const mysql = require('mysql2/promise');
@@ -24,6 +25,7 @@ const pool = mysql.createPool({
 // The `use` functions are the middleware - they get called before an endpoint is hit
 app.use(async function mysqlConnection(req, res, next) {
   try {
+    console.log('mysqlConnection', req)
     req.db = await pool.getConnection();
     req.db.connection.config.namedPlaceholders = true;
 
@@ -36,10 +38,13 @@ app.use(async function mysqlConnection(req, res, next) {
     req.db.release();
   } catch (err) {
     // If anything downstream throw an error, we must release the connection allocated for the request
+    console.log(err)
     if (req.db) req.db.release();
     throw err;
   }
 });
+
+app.use(cors());
 
 app.use(bodyParser.json());
 
@@ -47,7 +52,7 @@ app.use(bodyParser.json());
 app.post('/register', async function (req, res) {
   try {
     let user;
-
+    console.log('/registerrrrrr')
     bcrypt.hash(req.body.password, 10).then(async hash => {
       try {
         [user] = await req.db.query(`
@@ -104,37 +109,38 @@ app.post('/auth', async function (req, res) {
 
 
 // Jwt verification checks to see if there is an authorization header with a valid jwt in it.
-app.use(async function verifyJwt(ctx, res, next) {
-  if (!ctx.header.authorization) {
-    ctx.throw(401, 'Invalid authorization');
-  }
+// app.use(async function verifyJwt(ctx, res, next) {
+//   console.log('ctx.header', ctx.header('Accept'))
+//   if (!ctx.header.authorization) {
+//     throw(401, 'Invalid authorization');
+//   }
 
-  const [scheme, token] = ctx.header.authorization.split(' ');
+//   const [scheme, token] = ctx.header.authorization.split(' ');
 
-  if (scheme !== 'Bearer') {
-    ctx.throw(401, 'Invalid authorization');
-  }
+//   if (scheme !== 'Bearer') {
+//     ctx.throw(401, 'Invalid authorization');
+//   }
 
-  try {
-    const payload = jwt.verify(token, process.env.JWT_KEY);
+//   try {
+//     const payload = jwt.verify(token, process.env.JWT_KEY);
     
-    ctx.state.user = payload;
-  } catch (err) {
-    if (err.message && (err.message.toUpperCase() === 'INVALID TOKEN' || err.message.toUpperCase() === 'JWT EXPIRED')) {
+//     ctx.state.user = payload;
+//   } catch (err) {
+//     if (err.message && (err.message.toUpperCase() === 'INVALID TOKEN' || err.message.toUpperCase() === 'JWT EXPIRED')) {
 
-      ctx.status = err.status || 500;
-      ctx.body = err.message;
-      ctx.app.emit('jwt-error', err, ctx);
+//       ctx.status = err.status || 500;
+//       ctx.body = err.message;
+//       ctx.app.emit('jwt-error', err, ctx);
 
-    } else {
+//     } else {
 
-      ctx.throw((err.status || 500), err.message);
-    }
-    console.log(err)
-  }
+//       ctx.throw((err.status || 500), err.message);
+//     }
+//     console.log(err)
+//   }
 
-  await next();
-})
+//   await next();
+// })
 
 // These are the private endpoints, they require jwt authentication. When a request is made it goes to one of these functions after it goes through the middleware.
 // Then a response is set an returned (like `res.json(cars)`)
