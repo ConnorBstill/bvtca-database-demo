@@ -25,7 +25,6 @@ const pool = mysql.createPool({
 // The `use` functions are the middleware - they get called before an endpoint is hit
 app.use(async function mysqlConnection(req, res, next) {
   try {
-    console.log('mysqlConnection', req)
     req.db = await pool.getConnection();
     req.db.connection.config.namedPlaceholders = true;
 
@@ -52,7 +51,7 @@ app.use(bodyParser.json());
 app.post('/register', async function (req, res) {
   try {
     let user;
-    console.log('/registerrrrrr')
+
     bcrypt.hash(req.body.password, 10).then(async hash => {
       try {
         [user] = await req.db.query(`
@@ -67,9 +66,10 @@ app.post('/register', async function (req, res) {
       } catch (error) {
         console.log('error', error)
       }
-    })
+    });
+    const encodedUser = jwt.sign(req.body, process.env.JWT_KEY);
 
-    res.json(user);
+    res.json(encodedUser);
   } catch (err) {
     console.log('err', err)
   }
@@ -98,7 +98,6 @@ app.post('/auth', async function (req, res) {
       const encodedUser = jwt.sign(payload, process.env.JWT_KEY);
 
       res.json(encodedUser)
-  
     } else {
       res.json('Email/password not found')
     }
