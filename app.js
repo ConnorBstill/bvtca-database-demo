@@ -151,8 +151,6 @@ app.get('/', async function (req, res) {
     ON c.make_id = m.id
   `);
 
-  req.state.user.role;
-
   res.json(cars);
 })
 
