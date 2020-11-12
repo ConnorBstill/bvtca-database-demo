@@ -1,10 +1,10 @@
-const express = require('express')
-const bodyParser = require('body-parser')
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-const cors = require('cors');
+// const express = require('express')
+// const bodyParser = require('body-parser')
+// const jwt = require('jsonwebtoken');
+// const bcrypt = require('bcrypt');
+// const cors = require('cors');
 
-// NEW: MySQL database driver
+// // NEW: MySQL database driver
 const mysql = require('mysql2/promise');
 
 const app = express();
@@ -75,7 +75,7 @@ app.post('/register', async function (req, res) {
   }
 })
 
-app.post('/auth', async function (req, res) {
+app.post('/auth', async function (req) {
   try {
     const [[user]] = await req.db.query(`
       SELECT * FROM user WHERE email = :email
