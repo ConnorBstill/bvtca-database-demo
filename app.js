@@ -102,7 +102,6 @@ app.post('/register', async function (req, res) {
 //       res.json('Email/password not found')
 //     }
 //   } catch (err) {
-//     console.log('Error', err)
 //   }
 // })
 
