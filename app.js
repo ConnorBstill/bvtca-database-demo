@@ -75,36 +75,36 @@ app.post('/register', async function (req, res) {
   }
 })
 
-app.post('/auth', async function (req, res) {
-  try {
-    const [[user]] = await req.db.query(`
-      SELECT * FROM user WHERE email = :email
-    `, {  
-      email: req.body.email
-    });
+// app.post('/auth', async function (req, res) {
+//   try {
+//     const [[user]] = await req.db.query(`
+//       SELECT * FROM user WHERE email = :email
+//     `, {  
+//       email: req.body.email
+//     });
 
-    const userPassword = `${user.password}`
-    const compare = await bcrypt.compare(req.body.password, userPassword)
+//     const userPassword = `${user.password}`
+//     const compare = await bcrypt.compare(req.body.password, userPassword)
 
-    if (compare) {
-      const payload = {
-        email: user.email,
-        fname: user.fname,
-        lname: user.lname,
-        password: user.password,
-        role: 4
-      }
+//     if (compare) {
+//       const payload = {
+//         email: user.email,
+//         fname: user.fname,
+//         lname: user.lname,
+//         password: user.password,
+//         role: 4
+//       }
       
-      const encodedUser = jwt.sign(payload, process.env.JWT_KEY);
+//       const encodedUser = jwt.sign(payload, process.env.JWT_KEY);
 
-      res.json(encodedUser)
-    } else {
-      res.json('Email/password not found')
-    }
-  } catch (err) {
-    console.log('Error', err)
-  }
-})
+//       res.json(encodedUser)
+//     } else {
+//       res.json('Email/password not found')
+//     }
+//   } catch (err) {
+//     console.log('Error', err)
+//   }
+// })
 
 
 // Jwt verification checks to see if there is an authorization header with a valid jwt in it.
