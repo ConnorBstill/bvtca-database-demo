@@ -70,7 +70,7 @@ app.post('/register', async function (req, res) {
     let user;
 
     // Hashes the password and inserts the info into the `user` table
-    bcrypt.hash(req.body.password, 10).then(async hash => {
+    await bcrypt.hash(req.body.password, 10).then(async hash => {
       try {
         [user] = await req.db.query(`
           INSERT INTO user (email, fname, lname, password)
@@ -81,12 +81,20 @@ app.post('/register', async function (req, res) {
           lname: req.body.lname,
           password: hash
         });
+
+        console.log('user', user)
       } catch (error) {
         console.log('error', error)
       }
     });
 
-    const encodedUser = jwt.sign(req.body, process.env.JWT_KEY);
+    const encodedUser = jwt.sign(
+      { 
+        userId: user.insertId,
+        ...req.body
+      },
+      process.env.JWT_KEY
+    );
 
     res.json(encodedUser);
   } catch (err) {
@@ -138,7 +146,7 @@ app.post('/auth', async function (req, res) {
 
  // Jwt verification checks to see if there is an authorization header with a valid jwt in it.
 app.use(async function verifyJwt(req, res, next) {
-  console.log('req', req)
+  // console.log('req', req)
   if (!req.headers.authorization) {
     throw(401, 'Invalid authorization');
   }
@@ -175,6 +183,24 @@ app.use(async function verifyJwt(req, res, next) {
 
 // // These are the private endpoints, they require jwt authentication. When a request is made it goes to one of these functions after it goes through the middleware.
 // // Then a response is set an returned (like `res.json(cars)`)
+app.get('/user-cars', async function(req, res) {
+  try {
+
+    const [cars] = await req.db.query(
+      `SELECT * FROM car WHERE user_id = :user_id`,
+      {
+        user_id: req.user.userId
+      }
+    );
+
+    res.json(cars);
+
+    console.log('/user-cars', cars);
+  } catch (err) {
+    console.log('/user-cars error', err)
+  }
+});
+
 app.get('/:id', async function (req, res) {
   // const [cars] = await req.db.query(`
   //   SELECT c.id, c.model, m.name AS make_name
@@ -194,6 +220,7 @@ app.get('/:id', async function (req, res) {
 
   res.json(cars);
 });
+
 
 app.post('/', async function (req, res) {
   try {
