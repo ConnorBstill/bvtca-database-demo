@@ -111,7 +111,7 @@ app.post('/auth', async function (req, res) {
     });
 
     if (!user) {
-      res.json('Email/password not found');
+      res.json('Email not found');
     }
 
     console.log('user', user)
@@ -126,6 +126,7 @@ app.post('/auth', async function (req, res) {
 
     if (compare) {
       const payload = {
+        userId: user.id,
         email: user.email,
         fname: user.fname,
         lname: user.lname,
@@ -136,7 +137,7 @@ app.post('/auth', async function (req, res) {
 
       res.json(encodedUser)
     } else {
-      res.json('Email/password not found');
+      res.json('Password not found');
     }
   } catch (err) {
     console.log('Error in /auth', err)
@@ -146,7 +147,7 @@ app.post('/auth', async function (req, res) {
 
  // Jwt verification checks to see if there is an authorization header with a valid jwt in it.
 app.use(async function verifyJwt(req, res, next) {
-  // console.log('req', req)
+  // console.log('REQUESTTTT', req.headers)
   if (!req.headers.authorization) {
     throw(401, 'Invalid authorization');
   }
